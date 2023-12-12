@@ -5,51 +5,38 @@ import joblib
 
 app = Dash(__name__)
 
-display_output = html.Div(
-    [
-        dmc.Modal(
-            title="model predicton",
-            id="modal-centered",
-            centered=True,
-            zIndex=10000,
-            children=[dmc.Text(id="output")],
-        ),
-        dmc.Button("classification", id="modal-centered-button"),
-    ]
-)
-
 input_data = dmc.Stack(
     children=[
         dmc.TextInput(
             id="input-1",
-            label="height",
+            label="Height",
             type="number",
             style={"width": 200},
-            placeholder="enter height",
-            value=0,
+            placeholder="Enter height",
+            value=None,
         ),
         dmc.TextInput(
             id="input-2",
-            label="weight",
+            label="Weight",
             type="number",
             style={"width": 200},
-            placeholder="enter weight",
-            value=0,
+            placeholder="Enter weight",
+            value=None,
         ),
-        display_output,
+        html.Div(id="prediction-output")  # Display prediction here
     ],
 )
 
 header_data = dmc.Header(
     height=60,
-    children=[dmc.Text("Dog vs Cat classification")],
+    children=[dmc.Text("Dog vs Cat Classification")],
     style={
         "backgroundColor": "#8a4244",
-        "font-family": "Arial, sans-serif",
+        "fontFamily": "Arial, sans-serif",
         "textAlign": "center",
-        "font-size": "36px",
-        "font-weight": "bold",
-        "text-transform": "uppercase",
+        "fontSize": "36px",
+        "fontWeight": "bold",
+        "textTransform": "uppercase",
         "color": "#333",
     },
 )
@@ -69,45 +56,27 @@ app.layout = html.Div(
     ],
     style={
         "width": "50%",
-        "height": "300px",
         "textAlign": "center",
-        "margin": "10px",
-        "position": "absolute",
-        "top": "30%",
-        "left": "30%",
-        "margin": "-50px 0 0 -50px",
+        "margin": "10px auto",
     },
 )
 
-
-@callback(
-    Output("modal-centered", "opened"),
-    Output("output", "children"),
-    [Input("modal-centered-button", "n_clicks")],
-    [
-        State("modal-centered", "opened"),
-        State("input-1", "value"),
-        State("input-2", "value"),
-    ],
-    prevent_initial_call=True,
+@app.callback(
+    Output("prediction-output", "children"),
+    [Input("input-1", "value"), Input("input-2", "value")],
 )
-# def toggle_modal(n_clicks, opened, data1, data2):
-#     return not opened , f'{data1} {data2}'
-
-
-def get_predictions(n_clicks, opened, data1, data2):
-    # Unpickle classifier
-    clf = joblib.load("clf.pkl")
-    # Get values through input bars
-    height = data1
-    weight = data2
-    print(f"height:  {height},\nweight:  {weight}")
-    # Put inputs to dataframe
-    X = pd.DataFrame([[height, weight]], columns=["Height", "Weight"])
-    # Get prediction
-    prediction = clf.predict(X)[0]
-    return not opened, f"prediction: {prediction}"
-
+def get_predictions(data1, data2):
+    if data1 is not None and data2 is not None:
+        # Unpickle classifier
+        clf = joblib.load("clf.pkl")
+        # Get values from input fields
+        height = data1
+        weight = data2
+        # Put inputs into a dataframe
+        X = pd.DataFrame([[height, weight]], columns=["Height", "Weight"])
+        # Get prediction
+        prediction = clf.predict(X)[0]
+        return html.Div(f"Prediction: {prediction}")
 
 if __name__ == "__main__":
     app.run_server(debug=False, host="127.0.0.1", port=8181)
